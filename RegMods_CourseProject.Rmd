@@ -2,14 +2,24 @@
 title: "Analysis of the Effect of Transmission Type on Vehicle MPG"
 author: "Amir Manafpour"
 date: "5/7/2020"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+library(ggplot2)
+library(GGally)
+library(car)
 ```
 
 ## Executive Summary
+
+This study evalautes the affect of the type of transmission on the miles per gallon (mpg) value of the vehicles in the mtcars dataset. The results show when running regressional analyssis with MPG as the outcume and only the "am" variable as the predictor: a 7.25 increase in MPG for automatic transmission versus manual transmission is observed with a very low p-value.
+
+However, by incorporating more relevant variables such as wt and hp, the am (transmission type) variable becomes statisically insignficant. This implies that the MPG value of vehicles doesn't depend on transmission type and that other variables can better explain the variability in MPG values.
 
 ## Exploratory Data Analysis
 
@@ -18,9 +28,61 @@ data("mtcars")
 df <- mtcars
 ```
 
+Based on the correlation (see correlation plot) we observe the following:
+
+* Continuous variables: mpg, disp, hp, drat, wt, qsec
+* Discreate variables: vs, am, gear, carb, cyl
+* High correlation (>= 0.6) between mpg and -> cyl, disp, hp, drat, wt, vs, am
+* But a lot of the variables themselves are highly correlated to each other also
+
+## Regression Analysis
+
+First a model was fit using all variables and by considering cyl, vs, am, and gear variables as factors.
+
+```{r regression-all-variables}
+fit <- lm(mpg ~ factor(cyl) + disp + hp + drat+ wt + qsec + factor(vs)
+          + factor(am) + factor(gear) + carb, data = df)
+summary(fit)$coef
+```
+
+Based on the results above, it appears weight and horsepower seems to have the lowest p-values compared to all the other variables, followed by the transmission variable (am).
+
+To compare models, we'll start out with a model only including am, then add in the wt variable, followed by the hp variable.
+
+wt-hp have high correlation (0.659) and so do wt-am = (-.692) so we'll include the interaction of these variables also for comparison purposes.
+
+```{r regression-analysis}
+fit1 <- lm(mpg ~ factor(am), data = df)
+fit2 <- lm(mpg ~ factor(am) + wt, data = df)
+fit2i <- lm(mpg ~ factor(am)*wt, data = df)
+fit3 <- lm(mpg ~ wt + hp + factor(am), data = df)
+fit3i <- lm(mpg ~ wt*hp + wt*factor(am), data = df)
+
+summary(fit1)$coef
+summary(fit2)$coef
+summary(fit3)$coef
+
+anova(fit1, fit2, fit3)
+anova(fit1, fit2i, fit3i)
+```
+
 ## Model Selection
 
-## Results
+The model only considering am as a variable (fit1) has an estimated coefficient of 7.25 for the am = 1 factor. Which would imply that automatic transmission  (am = 1) has an MPG of about 7.25 higher versus manual transmission (am = 0). The p-value for fit1 also implies that the "am" variable is a statistically significant variable. However, the R-squared value is only 0.36 which implies a significan portion of the variation in MPG cannot be explained by the "am" variable alone.
 
-## Residuals and Diagnostics
+By adding in the wt and hp variables, we see p-values significanly less than 0.05 by running ANOVA on the 3 nested models. The same occurs when we run the ANOVA on models including the interaction of variables too. The R-squared value for models (fit2 + fit3) including wt and hp variables are significantly higher (>0.75) which implies a lot more of the variance in MPG can be explained by including the wt and hp variables.
 
+For fit2 and fit3 models the am variable becomes statiscally insignificant with p-values of 0.988 and 0.141 respectively. Ultimately this analysis implies that the type of transmission is statistically insignifcant compared to horsepower and weight.
+
+
+## Residuals Diagnostics
+
+Based on the residual plots (see appendix) above we can observe three data points (Toyota Corolla, Fiat 128, and Chrysler Imperial) that could be potential outliers. These data points may have more leverage than other data points which will need further analysis before omitting them.
+
+## Appendix - Figures
+
+```{r figures}
+ggpairs(df, lower = list(continuous = "smooth"))
+
+plot(fit3)
+```
