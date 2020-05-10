@@ -1,11 +1,9 @@
 ---
-title: "Analysis of the Effect of Transmission Type on Vehicle MPG"
-author: "Amir Manafpour"
-date: "5/7/2020"
 output:
   pdf_document: default
   html_document:
     df_print: paged
+geometry: margin=0.5in
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +12,9 @@ library(ggplot2)
 library(GGally)
 library(car)
 ```
+
+# Analysis of the Effect of Transmission Type on Vehicle MPG
+# Amir Manafpour      5/7/2020
 
 ## Executive Summary
 
@@ -24,8 +25,7 @@ However, by incorporating more relevant variables such as wt and hp, the am (tra
 ## Exploratory Data Analysis
 
 ```{r import-data}
-data("mtcars")
-df <- mtcars
+data("mtcars"); df <- mtcars
 ```
 
 Based on the correlation (see correlation plot) we observe the following:
@@ -79,10 +79,15 @@ For fit2 and fit3 models the am variable becomes statiscally insignificant with 
 
 Based on the residual plots (see appendix) above we can observe three data points (Toyota Corolla, Fiat 128, and Chrysler Imperial) that could be potential outliers. These data points may have more leverage than other data points which will need further analysis before omitting them.
 
+******
+
 ## Appendix - Figures
 
-```{r figures}
+```{r figures1}
 ggpairs(df, lower = list(continuous = "smooth"))
 
+```
+
+```{r figures2, out.width=c('50%', '50%')}
 plot(fit3)
 ```
